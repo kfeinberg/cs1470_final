@@ -47,11 +47,10 @@ def pad_corpus(sentence, count):
     """
     param: sentence split on whitespace
     """
+    padded_sentence = sentence[:WINDOW_SIZE-1]
     if (count%2 == 0):
-        padded_sentence = sentence[:WINDOW_SIZE]
         padded_sentence += [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
     else:
-        padded_sentence = sentence[:WINDOW_SIZE]
         padded_sentence = [START_TOKEN] + padded_sentence + [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
     return padded_sentence
 
@@ -101,18 +100,16 @@ def get_data():
         m = min(len(inputs), len(labels))
         inputs = inputs[:m]
         labels = labels[:m]
+    # this would make it so there are no unk_vocabs 
     vocab, pad_indx = build_vocab(inputs+labels)
     split_indx = int(len(inputs) * .9)
     train_inputs = inputs[:split_indx]
     test_inputs = inputs[split_indx:]
     train_labels = labels[:split_indx]
     test_labels = labels[split_indx:]
-
     train_inputs = convert_to_id(vocab, train_inputs)
     test_inputs = convert_to_id(vocab, test_inputs)
     train_labels = convert_to_id(vocab, train_labels)
     test_labels = convert_to_id(vocab, test_labels)
     
     return train_inputs, test_inputs, train_labels, test_labels, vocab, pad_indx
-
-get_data()
