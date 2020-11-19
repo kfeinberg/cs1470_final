@@ -83,6 +83,15 @@ def convert_to_id(vocab, sentences):
 
 
 def get_data():
+    """
+    :return: Tuple of train containing:
+	(2-d list or array with training input sentences in vectorized/id form [num_sentences x 30] ),
+	(2-d list or array with training label sentences in vectorized/id form [num_sentences x 31]),
+	(2-d list or array with test input sentences in vectorized/id form [num_sentences x 30]),
+	(2-d list or array with test label sentences in vectorized/id form [num_sentences x 31]),
+	vocab (Dict containg word->index mapping),
+	padding ID (the ID used for *PAD* in the vocab. This will be used for masking loss)
+	"""
     corpus = Corpus(filename=download("friends-corpus"))
     count = 0
     inputs = []
@@ -113,3 +122,4 @@ def get_data():
     test_labels = convert_to_id(vocab, test_labels)
     
     return train_inputs, test_inputs, train_labels, test_labels, vocab, pad_indx
+
