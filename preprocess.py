@@ -12,6 +12,8 @@ WINDOW_SIZE = 30
 def preprocess_sentence(sentence):
     """
     Takes out any contractions and separates punctuation from the word (separates on whitespace)
+    :param sentence: the sentence to be separated/edited
+    :return: sentence without contractions, and punctuation surrounded by whitespace.
     """
     sentence = sentence.lower().strip()
 	# creating a space between a word and the punctuation following it
@@ -45,7 +47,10 @@ def preprocess_sentence(sentence):
 
 def pad_corpus(sentence, count):
     """
-    param: sentence split on whitespace
+    Pads a sentence passed in with STOP and PAD tokens, as well as a START token if it is a label.
+    :param sentence: sentence split on whitespace
+    :param count: the iteration number for seeing if label or input
+    :return: the sentences shortened/lengthened to WINDOW_SIZE length and padded with stop/start/pad tokens
     """
     padded_sentence = sentence[:WINDOW_SIZE-1]
     if (count%2 == 0):
@@ -84,13 +89,16 @@ def convert_to_id(vocab, sentences):
 
 def get_data():
     """
-    :return: Tuple of train containing:
-	(2-d list or array with training input sentences in vectorized/id form [num_sentences x 30] ),
-	(2-d list or array with training label sentences in vectorized/id form [num_sentences x 31]),
-	(2-d list or array with test input sentences in vectorized/id form [num_sentences x 30]),
-	(2-d list or array with test label sentences in vectorized/id form [num_sentences x 31]),
+	Use the helper functions in this file to read and parse training and test data, then pad the corpus.
+	Then vectorize your train and test data based on your vocabulary dictionaries.
+	
+	:return: Tuple of train containing:
+	(2-d list or array with training input sentences in vectorized/id form [num_sentences x 31] ),
+	(2-d list or array with test input sentences in vectorized/id form [num_sentences x 31]),
+	(2-d list or array with training label sentences in vectorized/id form [num_sentences x 30]),
+	(2-d list or array with test label sentences in vectorized/id form [num_sentences x 30]),
 	vocab (Dict containg word->index mapping),
-	padding ID (the ID used for *PAD* in the vocab. This will be used for masking loss)
+	the padding ID (the ID used for *PAD* in the English vocab. This will be used for masking loss)
 	"""
     corpus = Corpus(filename=download("friends-corpus"))
     count = 0
@@ -122,4 +130,3 @@ def get_data():
     test_labels = convert_to_id(vocab, test_labels)
     
     return train_inputs, test_inputs, train_labels, test_labels, vocab, pad_indx
-
