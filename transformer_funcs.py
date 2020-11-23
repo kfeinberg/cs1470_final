@@ -51,8 +51,10 @@ class Multi_Headed(tf.keras.layers.Layer):
 		self.embedding_sz = emb_sz
 		self.use_mask = use_mask
 
-		head1 = AttenHead(emb_sz/2, emb_sz/2, use_mask)
-		head2 = AttenHead(emb_sz/2, emb_sz/2, use_mask)
+		# self.head_size = emb_sz
+
+		self.head1 = Atten_Head(self.embedding_sz, self.embedding_sz / 2, use_mask)
+		self.head2 = Atten_Head(self.embedding_sz, self.embedding_sz / 2, use_mask)
 
 		self.dense = tf.keras.layers.Dense(emb_sz)
 
@@ -74,7 +76,7 @@ class Multi_Headed(tf.keras.layers.Layer):
 		:param inputs_for_queries: tensor of [batch_size x [ENG/FRN]_WINDOW_SIZE x input_size ]
 		:return: tensor of [BATCH_SIZE x (ENG/FRN)_WINDOW_SIZE x output_size ]
 		"""
-		idx = len(inputs_for_keys)/2
+		idx = int(len(inputs_for_keys)/2)
 
 		input_keys_1 = inputs_for_keys[:idx]
 		input_vals_1 = inputs_for_values[:idx]
@@ -84,12 +86,12 @@ class Multi_Headed(tf.keras.layers.Layer):
 		input_vals_2 = inputs_for_values[idx:]
 		input_queries_2 = inputs_for_queries[idx:]
 
-		res1 = head1.call(input_keys_1, input_vals_1, input_queries_1)
-		res2 = head2.call(input_keys_2, input_vals_2, input_queries_2)
+		res1 = self.head1.call(input_keys_1, input_vals_1, input_queries_1)
+		res2 = self.head2.call(input_keys_2, input_vals_2, input_queries_2)
 
 		full_res = tf.concat((res1, res2), axis=0)
 
-		return dense(full_res)
+		return self.dense(full_res)
 
 
 class Feed_Forwards(tf.keras.layers.Layer):

@@ -3,11 +3,14 @@ import numpy as np
 import tensorflow as tf
 import re
 
+from attenvis import AttentionVis
+av = AttentionVis()
+
 PAD_TOKEN = "*PAD*"
 STOP_TOKEN = "*STOP*"
 START_TOKEN = "*START*"
 UNK_TOKEN = "*UNK*"
-WINDOW_SIZE = 30
+WINDOW_SIZE = 15
 
 def preprocess_sentence(sentence):
     """
