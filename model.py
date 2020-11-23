@@ -4,7 +4,6 @@ import tensorflow as tf
 import transformer_funcs as transformer
 
 from attenvis import AttentionVis
-
 av = AttentionVis()
 
 
@@ -31,8 +30,8 @@ class Transformer_Model(tf.keras.Model):
         self.response_pos_enc = transformer.Position_Encoding_Layer(self.window_size, self.embedding_size)
 
         # Encoder and Decoder layers
-        self.encoder = transformer.Transformer_Block(self.embedding_size, is_decoder=False)
-        self.decoder = transformer.Transformer_Block(self.embedding_size, is_decoder=True)
+        self.encoder = transformer.Transformer_Block(self.embedding_size, is_decoder=False, multi_headed=True)
+        self.decoder = transformer.Transformer_Block(self.embedding_size, is_decoder=True, multi_headed=True)
 
         # Dense layers
         self.dense1 = tf.keras.layers.Dense(units=self.hidden_size, activation='relu')
