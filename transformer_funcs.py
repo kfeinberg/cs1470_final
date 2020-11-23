@@ -120,7 +120,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 	@tf.function
 	def call(self, inputs, context=None):
 		"""
-		If the multi_headed==True, the model uses multiheaded attention (Only 2470 students must implement this)
+		If the multi_headed==True, the model uses multiheaded attention 
 
 		:param inputs: tensor of [BATCH_SIZE x WINDOW_SIZE x EMBEDDING_SIZE ]
 		:context: tensor of [BATCH_SIZE x WINDOW_SIZE x EMBEDDING_SIZE ] or None
