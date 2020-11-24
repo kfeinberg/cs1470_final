@@ -6,6 +6,7 @@ from preprocess import *
 from model import Transformer_Model
 import sys
 import random
+from keras.models import load_model
 
 from attenvis import AttentionVis
 av = AttentionVis()
@@ -15,6 +16,7 @@ def train(model, train_inputs, train_labels, padding_index):
     len_label_sentences = train_labels.shape[1]
 
     for batch in range(0, num_sentences - model.batch_size, model.batch_size):
+    # for batch in range(0, model.batch_size * 5, model.batch_size): # shorter run for quick testing
         start = batch
         end = batch + model.batch_size
         encoder_input = train_inputs[start:end]
@@ -28,7 +30,7 @@ def train(model, train_inputs, train_labels, padding_index):
             mask = decoder_labels != padding_index #[0 if index == eng_padding_index else 1 for index in decoder_labels]
             loss = model.loss_function(probs, decoder_labels, mask)
             print(loss)
-        
+
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
@@ -42,10 +44,11 @@ def test(model, test_inputs, test_labels, padding_index):
     total_words = 0
 
     for batch in range(0, num_sentences - model.batch_size, model.batch_size):
+    # for batch in range(0, model.batch_size * 5, model.batch_size): # shorter run for quick testing
         start = batch
         end = batch + model.batch_size
         encoder_input = test_inputs[start:end]
-        
+
         decoder_input = test_labels[start:end, 0:len_label_sent - 1] # take out last input bc no label to predict next word
         decoder_labels = test_labels[start:end, 1:] # take out first label bc no -1 input word to predict this label
 
@@ -79,6 +82,10 @@ def main():
     perplexity, accuracy = test(model, test_inputs, test_labels, pad_indx)
     print(perplexity)
     print(accuracy)
+
+    # use SAVE as command line argument to save model
+    if len(sys.argv) == 2 and sys.argv[1] == 'SAVE':
+        model.save_weights('saved/my_model')
 
 if __name__ == '__main__':
 	main()

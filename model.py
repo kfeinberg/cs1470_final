@@ -12,12 +12,12 @@ class Transformer_Model(tf.keras.Model):
         super(Transformer_Model, self).__init__()
 
         # train and test sentences will have same vocab_size and window_size
-        self.vocab_size = vocab_size 
+        self.vocab_size = vocab_size
         self.window_size = window_size # 30
 
         # hidden layer size, batch_size, embedding_size, optimizer
         self.hidden_size = 128
-        self.batch_size = 100
+        self.batch_size = 30
         self.embedding_size = 72
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
@@ -66,7 +66,7 @@ class Transformer_Model(tf.keras.Model):
 
     def accuracy_function(self, probs, responses, mask):
         """
-        Calculate accuracy of one batch 
+        Calculate accuracy of one batch
         :param prbs:  float tensor, word prediction probabilities [batch_size x window_size x vocab_size]
 		:param responses:  integer tensor, word prediction responses [batch_size x window_size]
 		:param mask:  tensor that acts as a padding mask [batch_size x window_size]
@@ -84,8 +84,3 @@ class Transformer_Model(tf.keras.Model):
     @av.call_func
     def __call__(self, *args, **kwargs):
         return super(Transformer_Model, self).__call__(*args, **kwargs)
-
-
-
-
-
