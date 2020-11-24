@@ -2,6 +2,7 @@ from convokit import Corpus, download
 import numpy as np
 import tensorflow as tf
 import re
+from collections import Counter 
 
 from attenvis import AttentionVis
 av = AttentionVis()
@@ -72,12 +73,10 @@ def build_vocab(sentences):
   	"""
     tokens = []
     for s in sentences: tokens.extend(s)
-    
-    for word in tokens: 
-        if tokens.count(word) < 3:
-            tokens = list(filter((word).__ne__, tokens))
-
-    all_words = sorted(list(set([STOP_TOKEN,PAD_TOKEN,UNK_TOKEN] + tokens)))
+    counted = Counter(tokens)
+    new_tokens = [word for word in tokens if counted[word] > 3] 
+         
+    all_words = sorted(list(set([STOP_TOKEN,PAD_TOKEN,UNK_TOKEN] + new_tokens)))
 
     vocab = {word:i for i,word in enumerate(all_words)}
 
