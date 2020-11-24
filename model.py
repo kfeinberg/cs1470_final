@@ -18,7 +18,7 @@ class Transformer_Model(tf.keras.Model):
         # hidden layer size, batch_size, embedding_size, optimizer
         self.hidden_size = 128
         self.batch_size = 30
-        self.embedding_size = 72
+        self.embedding_size = 500
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
         # prompt (input) and response (label) embedding layers:
