@@ -6,9 +6,8 @@ import transformer_funcs as transformer
 from attenvis import AttentionVis
 av = AttentionVis()
 
-
 class Transformer_Model(tf.keras.Model):
-    def __init__(self, window_size, vocab_size):
+    def __init__(self, window_size, vocab_size, len_data):
         super(Transformer_Model, self).__init__()
 
         # train and test sentences will have same vocab_size and window_size
@@ -19,7 +18,15 @@ class Transformer_Model(tf.keras.Model):
         self.hidden_size = 128
         self.batch_size = 30
         self.embedding_size = 500
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+
+        # piecewise constant decay learning rate
+        num_steps = len_data / self.batch_size
+        boundaries = [80*num_steps, 120*num_steps, 160*num_steps, 180*num_steps]
+        values = [1e-3, 1e-4, 1e-5, 1e-6, 5e-6]
+        self.lr_schedule = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
+            boundaries, values)
+
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
 
         # prompt (input) and response (label) embedding layers:
         self.prompt_embedding = tf.Variable(tf.random.normal([self.vocab_size,self.embedding_size], stddev=.01, dtype=tf.float32))

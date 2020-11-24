@@ -53,8 +53,8 @@ class Multi_Headed(tf.keras.layers.Layer):
 
 		# self.head_size = emb_sz
 
-		self.head1 = Atten_Head(self.embedding_sz, int(self.embedding_sz/2), use_mask)
-		self.head2 = Atten_Head(self.embedding_sz, int(self.embedding_sz/2), use_mask)
+		self.head1 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 2), use_mask)
+		self.head2 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 2), use_mask)
 
 		self.dense = tf.keras.layers.Dense(emb_sz)
 
