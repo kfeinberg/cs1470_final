@@ -74,7 +74,7 @@ def build_vocab(sentences):
     for s in sentences: tokens.extend(s)
     
     for word in tokens: 
-        if tokens.count(word) < 5:
+        if tokens.count(word) < 3:
             tokens = list(filter((word).__ne__, tokens))
 
     all_words = sorted(list(set([STOP_TOKEN,PAD_TOKEN,UNK_TOKEN] + tokens)))
