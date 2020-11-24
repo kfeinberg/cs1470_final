@@ -72,9 +72,14 @@ def build_vocab(sentences):
   	"""
     tokens = []
     for s in sentences: tokens.extend(s)
+    
+    for word in tokens: 
+        if tokens.count(word) < 5:
+            tokens = list(filter((word).__ne__, tokens))
+
     all_words = sorted(list(set([STOP_TOKEN,PAD_TOKEN,UNK_TOKEN] + tokens)))
 
-    vocab =  {word:i for i,word in enumerate(all_words)}
+    vocab = {word:i for i,word in enumerate(all_words)}
 
     return vocab,vocab[PAD_TOKEN]
 
