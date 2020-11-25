@@ -40,7 +40,7 @@ def train(model, train_inputs, train_labels, padding_index):
             batch_correct = batch_accuracy * num_words
             accuracy_list.append(batch_correct)
             print(loss)
-        # print(model.lr_schedule)
+
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
     
@@ -101,6 +101,10 @@ def main():
     perplexity, accuracy = test(model, test_inputs, test_labels, pad_indx)
     print(perplexity)
     print(accuracy)
+
+    # use SAVE as command line argument to save model
+    if len(sys.argv) == 2 and sys.argv[1] == 'SAVE':
+        model.save_weights('saved/my_model')
 
 if __name__ == '__main__':
 	main()

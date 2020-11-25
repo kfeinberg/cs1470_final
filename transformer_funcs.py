@@ -120,7 +120,8 @@ class Transformer_Block(tf.keras.layers.Layer):
 		self.is_decoder = is_decoder
 		if self.is_decoder:
 			self.self_context_atten = Atten_Head(emb_sz,emb_sz,use_mask=False) if not multi_headed else Multi_Headed(emb_sz,use_mask=False)
-
+		
+		self.dropout = tf.keras.layers.Dropout(rate=0.1)
 		self.layer_norm = tf.keras.layers.LayerNormalization(axis=-1)
 
 	@tf.function
@@ -134,16 +135,22 @@ class Transformer_Block(tf.keras.layers.Layer):
 
 		with av.trans_block(self.is_decoder):
 			atten_out = self.self_atten(inputs,inputs,inputs)
+		
+		if self.is_decoder == False: # only dropout if encoder
+			atten_out = self.dropout(atten_out)
+
 		atten_out+=inputs
 		atten_normalized = self.layer_norm(atten_out)
 
 		if self.is_decoder:
 			assert context is not None,"Decoder blocks require context"
 			context_atten_out = self.self_context_atten(context,context,atten_normalized)
+			self.dropout(context_atten_out)
 			context_atten_out+=atten_normalized
 			atten_normalized = self.layer_norm(context_atten_out)
 
 		ff_out=self.ff_layer(atten_normalized)
+		ff_out = self.dropout(ff_out)
 		ff_out+=atten_normalized
 		ff_norm = self.layer_norm(ff_out)
 
