@@ -6,7 +6,6 @@ from preprocess import *
 from model import Transformer_Model
 import sys
 import random
-from keras.models import load_model
 
 from attenvis import AttentionVis
 av = AttentionVis()
@@ -20,7 +19,6 @@ def train(model, train_inputs, train_labels, padding_index):
     total_words = 0
 
     for batch in range(0, num_sentences - model.batch_size, model.batch_size):
-    # for batch in range(0, model.batch_size * 5, model.batch_size): # shorter run for quick testing
         start = batch
         end = batch + model.batch_size
         encoder_input = train_inputs[start:end]
@@ -42,6 +40,7 @@ def train(model, train_inputs, train_labels, padding_index):
             batch_correct = batch_accuracy * num_words
             accuracy_list.append(batch_correct)
             print(loss)
+        # print(model.lr_schedule)
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
     
@@ -60,11 +59,10 @@ def test(model, test_inputs, test_labels, padding_index):
     total_words = 0
 
     for batch in range(0, num_sentences - model.batch_size, model.batch_size):
-    # for batch in range(0, model.batch_size * 5, model.batch_size): # shorter run for quick testing
         start = batch
         end = batch + model.batch_size
         encoder_input = test_inputs[start:end]
-
+        
         decoder_input = test_labels[start:end, 0:len_label_sent - 1] # take out last input bc no label to predict next word
         decoder_labels = test_labels[start:end, 1:] # take out first label bc no -1 input word to predict this label
 
@@ -93,7 +91,7 @@ def main():
 
     model = Transformer_Model(WINDOW_SIZE, len(vocab), train_inputs.shape[0])
 
-    for epoch in range(3):
+    for epoch in range(2):
         print('Training epoch #' + str(epoch + 1))
         perp, acc = train(model, train_inputs, train_labels, pad_indx)
         print(perp)
@@ -103,10 +101,6 @@ def main():
     perplexity, accuracy = test(model, test_inputs, test_labels, pad_indx)
     print(perplexity)
     print(accuracy)
-
-    # use SAVE as command line argument to save model
-    if len(sys.argv) == 2 and sys.argv[1] == 'SAVE':
-        model.save_weights('saved/my_model')
 
 if __name__ == '__main__':
 	main()

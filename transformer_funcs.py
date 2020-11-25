@@ -53,8 +53,9 @@ class Multi_Headed(tf.keras.layers.Layer):
 
 		# self.head_size = emb_sz
 
-		self.head1 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 2), use_mask)
-		self.head2 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 2), use_mask)
+		self.head1 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 3), use_mask)
+		self.head2 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 3), use_mask)
+		self.head3 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 3), use_mask)
 
 		self.dense = tf.keras.layers.Dense(emb_sz)
 
@@ -62,34 +63,37 @@ class Multi_Headed(tf.keras.layers.Layer):
 	def call(self, inputs_for_keys, inputs_for_values, inputs_for_queries):
 		"""
 		FOR CS2470 STUDENTS:
-
 		This functions runs a multiheaded attention layer.
-
 		Requirements:
 			- Splits data for 3 different heads of size embed_sz/3
 			- Create three different attention heads
 			- Concatenate the outputs of these heads together
 			- Apply a linear layer
-
 		:param inputs_for_keys: tensor of [batch_size x WINDOW_SIZE x input_size ]
 		:param inputs_for_values: tensor of [batch_size x WINDOW_SIZE x input_size ]
 		:param inputs_for_queries: tensor of [batch_size x WINDOW_SIZE x input_size ]
 		:return: tensor of [BATCH_SIZE x WINDOW_SIZE x output_size ]
 		"""
-		idx = int(len(inputs_for_keys)/2)
+		idx = int(len(inputs_for_keys)/3)
+		idx2 = idx*2
 
 		input_keys_1 = inputs_for_keys[:idx]
 		input_vals_1 = inputs_for_values[:idx]
 		input_queries_1 = inputs_for_queries[:idx]
 
-		input_keys_2 = inputs_for_keys[idx:]
-		input_vals_2 = inputs_for_values[idx:]
-		input_queries_2 = inputs_for_queries[idx:]
+		input_keys_2 = inputs_for_keys[idx:idx2]
+		input_vals_2 = inputs_for_values[idx:idx2]
+		input_queries_2 = inputs_for_queries[idx:idx2]
+
+		input_keys_3 = inputs_for_keys[idx2:]
+		input_vals_3 = inputs_for_values[idx2:]
+		input_queries_3 = inputs_for_queries[idx2:]
 
 		res1 = self.head1.call(input_keys_1, input_vals_1, input_queries_1)
 		res2 = self.head2.call(input_keys_2, input_vals_2, input_queries_2)
+		res3 = self.head3.call(input_keys_3, input_vals_3, input_queries_3)
 
-		full_res = tf.concat((res1, res2), axis=0)
+		full_res = tf.concat((res1, res2, res3), axis=0)
 
 		return self.dense(full_res)
 
@@ -122,8 +126,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 	@tf.function
 	def call(self, inputs, context=None):
 		"""
-		If the multi_headed==True, the model uses multiheaded attention 
-
+		If the multi_headed==True, the model uses multiheaded attention (Only 2470 students must implement this)
 		:param inputs: tensor of [BATCH_SIZE x WINDOW_SIZE x EMBEDDING_SIZE ]
 		:context: tensor of [BATCH_SIZE x WINDOW_SIZE x EMBEDDING_SIZE ] or None
 			default=None, This is context from the encoder to be used as Keys and Values in self-attention function
@@ -155,7 +158,6 @@ class Position_Encoding_Layer(tf.keras.layers.Layer):
 	def call(self, x):
 		"""
 		Adds positional embeddings to word embeddings.
-
 		:param x: [BATCH_SIZE x WINDOW_SIZE x EMBEDDING_SIZE ] the input embeddings fed to the encoder
 		:return: [BATCH_SIZE x WINDOW_SIZE x EMBEDDING_SIZE ] new word embeddings with added positional encodings
 		"""

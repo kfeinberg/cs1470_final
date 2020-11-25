@@ -11,18 +11,18 @@ class Transformer_Model(tf.keras.Model):
         super(Transformer_Model, self).__init__()
 
         # train and test sentences will have same vocab_size and window_size
-        self.vocab_size = vocab_size
+        self.vocab_size = vocab_size 
         self.window_size = window_size # 30
 
         # hidden layer size, batch_size, embedding_size, optimizer
         self.hidden_size = 128
-        self.batch_size = 30
+        self.batch_size = 100
         self.embedding_size = 500
 
         # piecewise constant decay learning rate
         num_steps = len_data / self.batch_size
         boundaries = [80*num_steps, 120*num_steps, 160*num_steps, 180*num_steps]
-        values = [1e-3, 1e-4, 1e-5, 1e-6, 5e-6]
+        values = [1e-3, 1e-4, 5e-5, 1e-5, 5e-6]
         self.lr_schedule = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
             boundaries, values)
 
@@ -73,7 +73,7 @@ class Transformer_Model(tf.keras.Model):
 
     def accuracy_function(self, probs, responses, mask):
         """
-        Calculate accuracy of one batch
+        Calculate accuracy of one batch 
         :param prbs:  float tensor, word prediction probabilities [batch_size x window_size x vocab_size]
 		:param responses:  integer tensor, word prediction responses [batch_size x window_size]
 		:param mask:  tensor that acts as a padding mask [batch_size x window_size]

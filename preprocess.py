@@ -30,7 +30,7 @@ def preprocess_sentence(sentence):
     sentence = re.sub(r"she's", "she is", sentence)
     sentence = re.sub(r"it's", "it is", sentence)
     sentence = re.sub(r"that's", "that is", sentence)
-    sentence = re.sub(r"what's", "that is", sentence)
+    sentence = re.sub(r"what's", "what is", sentence)
     sentence = re.sub(r"where's", "where is", sentence)
     sentence = re.sub(r"how's", "how is", sentence)
     sentence = re.sub(r"\'ll", " will", sentence)
@@ -44,7 +44,7 @@ def preprocess_sentence(sentence):
     sentence = re.sub(r"n'", "ng", sentence)
     sentence = re.sub(r"'bout", "about", sentence)
     # replacing everything with space except (a-z, A-Z, ".", "?", "!", ",")
-    sentence = re.sub(r"[^a-zA-Z]+", " ", sentence)
+    sentence = re.sub(r"[^a-zA-Z?.!,]+", " ", sentence)
     sentence = sentence.strip()
     return sentence
 
@@ -53,7 +53,7 @@ def pad_corpus(sentence, count):
     """
     Pads a sentence passed in with STOP and PAD tokens, as well as a START token if it is a label.
     :param sentence: sentence split on whitespace
-    :param count: the iteration number for seeing if label or input (0 for input 1 for label)
+    :param count: the iteration number for seeing if label or input
     :return: the sentences shortened/lengthened to WINDOW_SIZE length and padded with stop/start/pad tokens
     """
     padded_sentence = sentence[:WINDOW_SIZE-1]
@@ -67,48 +67,35 @@ def pad_corpus(sentence, count):
 def build_vocab(sentences):
     """
   	Builds vocab from list of sentences
-
 	:param sentences:  list of sentences, each a list of words
 	:return: tuple of (dictionary: word --> unique index, pad_token_idx)
   	"""
     tokens = []
     for s in sentences: tokens.extend(s)
     counted = Counter(tokens)
-    new_tokens = [word for word in tokens if counted[word] > 3] 
-         
-    all_words = sorted(list(set([STOP_TOKEN,PAD_TOKEN,UNK_TOKEN] + new_tokens)))
+    new_tokens = [word for word in tokens if counted[word] > 3]
+    all_words = sorted(list(set([STOP_TOKEN,PAD_TOKEN,UNK_TOKEN] + new_tokens))) 
 
-    vocab = {word:i for i,word in enumerate(all_words)}
+    vocab =  {word:i for i,word in enumerate(all_words)}
 
     return vocab,vocab[PAD_TOKEN]
 
 
 def convert_to_id(vocab, sentences):
     """
-    Convert sentences to indexed
-
+    Convert sentences to indexed 
     :param vocab:  dictionary, word --> unique index
     :param sentences:  list of lists of words, each representing padded sentence
     :return: numpy array of integers, with each row representing the word indeces in the corresponding sentences
     """
     return np.stack([[vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence] for sentence in sentences])
 
-def convert_to_id_single(vocab, sentence):
-    """
-    Converts one sentence to be indexed
-
-    :param vocab:  dictionary, word --> unique index
-    :param sentence:  list of words, one padded sentence
-    :return: numpy array of integers, with each row representing the word indeces in the corresponding sentences
-    """
-    return np.stack([vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence])
-
 
 def get_data():
     """
 	Use the helper functions in this file to read and parse training and test data, then pad the corpus.
 	Then vectorize your train and test data based on your vocabulary dictionaries.
-
+	
 	:return: Tuple of train containing:
 	(2-d list or array with training input sentences in vectorized/id form [num_sentences x 31] ),
 	(2-d list or array with test input sentences in vectorized/id form [num_sentences x 31]),
@@ -127,14 +114,14 @@ def get_data():
         utt_pad = pad_corpus(utt_split, count)
         if (count%2 == 0):
             inputs.append(utt_pad)
-        else:
+        else: 
             labels.append(utt_pad)
         count += 1
     if (len(inputs) != len(labels)):
         m = min(len(inputs), len(labels))
         inputs = inputs[:m]
         labels = labels[:m]
-    # this would make it so there are no unk_vocabs
+    # this would make it so there are no unk_vocabs 
     vocab, pad_indx = build_vocab(inputs+labels)
     split_indx = int(len(inputs) * .9)
     train_inputs = inputs[:split_indx]
@@ -145,5 +132,5 @@ def get_data():
     test_inputs = convert_to_id(vocab, test_inputs)
     train_labels = convert_to_id(vocab, train_labels)
     test_labels = convert_to_id(vocab, test_labels)
-
+    
     return train_inputs, test_inputs, train_labels, test_labels, vocab, pad_indx
