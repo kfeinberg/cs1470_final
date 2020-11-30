@@ -14,7 +14,7 @@ def main():
 
     train_inputs, test_inputs, train_labels, test_labels, vocab, pad_indx = get_data()
 
-    model = Transformer_Model(WINDOW_SIZE, len(vocab))
+    model = Transformer_Model(WINDOW_SIZE, len(vocab), 1)
     test(model, test_inputs, test_labels, pad_indx)
     model.load_weights('saved/my_model')
 
@@ -29,7 +29,8 @@ def main():
             val = pad_corpus(val, 0)
             val = convert_to_id_single(vocab, val)
             val = np.reshape(val, (1, len(val)))
-            res = model.call(val, val) # todo: call function without decoder input
+            res = np.array(model.call(val, val)) # todo: call function without decoder input
+            res[:, :, 3] = np.zeros((1, 15)) # replaces UNK row with zeros so it can't be in output
             res = np.argmax(res, axis=2)
             res = convert_to_words(res, lookup)
             print(res)
@@ -40,7 +41,10 @@ def main():
 def convert_to_words(sentence, lookup):
     res = ''
     for val in sentence[0]:
-        res = res + lookup[val] + ' '
+        converted = lookup[val]
+        if (converted == STOP_TOKEN):
+            return res
+        res = res + converted + ' '
     return res
 
 if __name__ == '__main__':
