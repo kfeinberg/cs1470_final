@@ -22,7 +22,7 @@ class Transformer_Model(tf.keras.Model):
         # piecewise constant decay learning rate
         num_steps = len_data / self.batch_size
         boundaries = [80*num_steps, 120*num_steps, 160*num_steps, 180*num_steps]
-        values = [1e-3, 1e-4, 5e-5, 1e-5, 5e-6]
+        values = [1e-3, 1e-4, 8e-5, 1e-5, 5e-6]
         self.lr_schedule = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
             boundaries, values)
 
