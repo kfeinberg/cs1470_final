@@ -23,24 +23,54 @@ def main():
 
     try:
         while True:
-            val = input("user input to model: ")
+            val = input("user: ")
+
+            # process user input to match model input
             val = preprocess_sentence(val)
             val = val.split()
-            val = pad_corpus(val, 0)
+            #val = pad_corpus(val, 0)
+            val = pad_corpus(val, 1)[-1]
             val = convert_to_id_single(vocab, val)
             val = np.reshape(val, (1, len(val)))
+
+            # generate model response to user input
+            #res = generate_sentence(model, val, lookup, vocab)
             res = np.array(model.call(val, val)) # todo: call function without decoder input
+
+            # convert model response to readable text
             res[:, :, 3] = np.zeros((1, 15)) # replaces UNK row with zeros so it can't be in output
             res = np.argmax(res, axis=2)
-            res = convert_to_words(res, lookup)
-            print(res)
+            res = convert_to_words(res[0], lookup)
+            print('model: ' + res)
 
     except KeyboardInterrupt:
         print('\ngoodbye!')
 
+# given encoder input and lookup dictionary, returns model-generated numeric sentence
+def generate_sentence(model, encoder_input, lookup, vocab):
+
+    # decoder input starts as start token + padding
+    decoder_input = [START_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE-1)
+    decoder_input = convert_to_id_single(vocab, decoder_input)
+    decoder_input = np.reshape(decoder_input, (1, len(decoder_input)))
+
+    for i in range(1, WINDOW_SIZE):
+
+        res = np.array(model.call(encoder_input, decoder_input))
+        res[:, :, 3] = np.zeros((1, 15)) # replaces UNK row with zeros so it can't be in output
+        res = np.argmax(res, axis=2)[0]
+
+        decoder_input[0][i] = res[i-1]
+        converted_symbol = lookup[decoder_input[0][i]]
+        if (converted_symbol == STOP_TOKEN): # end of sentence
+            return res
+
+    return res
+
+# converts model encoded sentence to English sentence
 def convert_to_words(sentence, lookup):
     res = ''
-    for val in sentence[0]:
+    for val in sentence:
         converted = lookup[val]
         if (converted == STOP_TOKEN):
             return res
