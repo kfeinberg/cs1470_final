@@ -46,12 +46,8 @@ class Multi_Headed(tf.keras.layers.Layer):
 	def __init__(self, emb_sz, use_mask):
 		super(Multi_Headed, self).__init__()
 
-		# TODO:
-		# Initialize heads
 		self.embedding_sz = emb_sz
 		self.use_mask = use_mask
-
-		# self.head_size = emb_sz
 
 		self.head1 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 3), use_mask)
 		self.head2 = Atten_Head(self.embedding_sz, int(self.embedding_sz / 3), use_mask)
@@ -74,26 +70,11 @@ class Multi_Headed(tf.keras.layers.Layer):
 		:param inputs_for_queries: tensor of [batch_size x WINDOW_SIZE x input_size ]
 		:return: tensor of [BATCH_SIZE x WINDOW_SIZE x output_size ]
 		"""
-		idx = int(len(inputs_for_keys)/3)
-		idx2 = idx*2
+		res1 = self.head1.call(inputs_for_keys, inputs_for_values, inputs_for_queries)
+		res2 = self.head2.call(inputs_for_keys, inputs_for_values, inputs_for_queries)
+		res3 = self.head3.call(inputs_for_keys, inputs_for_values, inputs_for_queries)
 
-		input_keys_1 = inputs_for_keys[:idx]
-		input_vals_1 = inputs_for_values[:idx]
-		input_queries_1 = inputs_for_queries[:idx]
-
-		input_keys_2 = inputs_for_keys[idx:idx2]
-		input_vals_2 = inputs_for_values[idx:idx2]
-		input_queries_2 = inputs_for_queries[idx:idx2]
-
-		input_keys_3 = inputs_for_keys[idx2:]
-		input_vals_3 = inputs_for_values[idx2:]
-		input_queries_3 = inputs_for_queries[idx2:]
-
-		res1 = self.head1.call(input_keys_1, input_vals_1, input_queries_1)
-		res2 = self.head2.call(input_keys_2, input_vals_2, input_queries_2)
-		res3 = self.head3.call(input_keys_3, input_vals_3, input_queries_3)
-
-		full_res = tf.concat((res1, res2, res3), axis=0)
+		full_res = tf.concat((res1, res2, res3), axis=2)
 
 		return self.dense(full_res)
 
@@ -120,7 +101,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 		self.is_decoder = is_decoder
 		if self.is_decoder:
 			self.self_context_atten = Atten_Head(emb_sz,emb_sz,use_mask=False) if not multi_headed else Multi_Headed(emb_sz,use_mask=False)
-		
+
 		self.dropout = tf.keras.layers.Dropout(rate=0.1)
 		self.layer_norm = tf.keras.layers.LayerNormalization(axis=-1)
 
@@ -135,7 +116,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 
 		with av.trans_block(self.is_decoder):
 			atten_out = self.self_atten(inputs,inputs,inputs)
-		
+
 		if self.is_decoder == False: # only dropout if encoder
 			atten_out = self.dropout(atten_out)
 

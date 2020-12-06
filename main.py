@@ -43,7 +43,7 @@ def train(model, train_inputs, train_labels, padding_index):
 
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-    
+
     perplexity = np.exp(np.sum(loss_list) / total_words)
     accuracy = np.sum(accuracy_list) / total_words
 
@@ -62,7 +62,7 @@ def test(model, test_inputs, test_labels, padding_index):
         start = batch
         end = batch + model.batch_size
         encoder_input = test_inputs[start:end]
-        
+
         decoder_input = test_labels[start:end, 0:len_label_sent - 1] # take out last input bc no label to predict next word
         decoder_labels = test_labels[start:end, 1:] # take out first label bc no -1 input word to predict this label
 

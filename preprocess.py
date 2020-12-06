@@ -114,22 +114,23 @@ def get_data():
 	the padding ID (the ID used for *PAD* in the English vocab. This will be used for masking loss)
 	"""
     corpus = Corpus(filename=download("friends-corpus"))
-    count = 0
     inputs = []
     labels = []
+
     for utt in corpus.iter_utterances():
         utt_preprocessed = preprocess_sentence(utt.text)
         utt_split = utt_preprocessed.split()
-        utt_pad = pad_corpus(utt_split, count)
-        if (count%2 == 0):
-            inputs.append(utt_pad)
-        else:
-            labels.append(utt_pad)
-        count += 1
-    if (len(inputs) != len(labels)):
-        m = min(len(inputs), len(labels))
-        inputs = inputs[:m]
-        labels = labels[:m]
+
+        utt_pad_input = pad_corpus(utt_split, 0)
+        utt_pad_label = pad_corpus(utt_split, 1)
+
+        inputs.append(utt_pad_input)
+        labels.append(utt_pad_label)
+
+    # remove first label and last input
+    inputs = inputs[:-1]
+    labels = labels[1:]
+
     # this would make it so there are no unk_vocabs
     vocab, pad_indx = build_vocab(inputs+labels)
     split_indx = int(len(inputs) * .9)
