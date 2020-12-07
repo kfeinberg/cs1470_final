@@ -11,7 +11,8 @@ PAD_TOKEN = "*PAD*"
 STOP_TOKEN = "*STOP*"
 START_TOKEN = "*START*"
 UNK_TOKEN = "*UNK*"
-WINDOW_SIZE = 15
+WINDOW_SIZE = 80 #15
+HISTORY_SIZE = 5 # number of preceding sentences as history
 
 def preprocess_sentence(sentence):
     """
@@ -50,19 +51,45 @@ def preprocess_sentence(sentence):
     return sentence
 
 
-def pad_corpus(sentence, count):
+# def pad_corpus(sentence, count):
+#     """
+#     Pads a sentence passed in with STOP and PAD tokens, as well as a START token if it is a label.
+#     :param sentence: sentence split on whitespace
+#     :param count: the iteration number for seeing if label or input
+#     :return: the sentences shortened/lengthened to WINDOW_SIZE length and padded with stop/start/pad tokens
+#     """
+#     padded_sentence = sentence[:WINDOW_SIZE-1]
+#     if (count%2 == 0):
+#         padded_sentence += [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
+#     else:
+#         padded_sentence = [START_TOKEN] + padded_sentence + [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
+#     return padded_sentence
+
+def pad_corpus(inputs, labels):
     """
     Pads a sentence passed in with STOP and PAD tokens, as well as a START token if it is a label.
-    :param sentence: sentence split on whitespace
-    :param count: the iteration number for seeing if label or input
+    :param inputs: list of inputs, each line is a concatenation of 5 sentences
+    :param labels: list of label sentences
     :return: the sentences shortened/lengthened to WINDOW_SIZE length and padded with stop/start/pad tokens
     """
-    padded_sentence = sentence[:WINDOW_SIZE-1]
-    if (count%2 == 0):
-        padded_sentence += [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
-    else:
-        padded_sentence = [START_TOKEN] + padded_sentence + [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
-    return padded_sentence
+    INPUTS_padded_sentences = []
+
+    for line in inputs:
+        padded_INPUT = line[-WINDOW_SIZE:]
+        if len(padded_INPUT) < WINDOW_SIZE:
+            padded_INPUT += [PAD_TOKEN] * (WINDOW_SIZE - len(padded_INPUT))
+        
+        INPUTS_padded_sentences.append(padded_INPUT)
+
+    LABELS_padded_sentences = []
+
+    for line in labels:
+        padded_LABEL = line[-WINDOW_SIZE:]
+        # replace START token with speaker for labels
+        padded_LABEL = [START_TOKEN] + padded_LABEL + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_LABEL))
+        LABELS_padded_sentences.append(padded_LABEL)
+
+    return INPUTS_padded_sentences, LABELS_padded_sentences
 
 
 def build_vocab(sentences):
@@ -100,7 +127,7 @@ def convert_to_id_single(vocab, sentence):
     """
     return np.stack([vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence])
 
-def get_data():
+def get_data(mode):
     """
 	Use the helper functions in this file to read and parse training and test data, then pad the corpus.
 	Then vectorize your train and test data based on your vocabulary dictionaries.
@@ -116,31 +143,82 @@ def get_data():
     corpus = Corpus(filename=download("friends-corpus"))
     inputs = []
     labels = []
-
-    for utt in corpus.iter_utterances():
-        utt_preprocessed = preprocess_sentence(utt.text)
+    entire_corpus = []
+    for i, utt in enumerate(corpus.iter_utterances()):
+        # added first name of speaker to beginning of sentence and STOP token to end
+        utt_preprocessed = utt.speaker.id.split()[0] + ' ' + preprocess_sentence(utt.text) + ' ' + STOP_TOKEN
         utt_split = utt_preprocessed.split()
+        entire_corpus.append(utt_split)
 
-        utt_pad_input = pad_corpus(utt_split, 0)
-        utt_pad_label = pad_corpus(utt_split, 1)
+    if mode == 'MT':
+        print('Mode is machine translation')
+        # split into 5-sentence inputs and 1 sentence label
+        for i in range(0, len(entire_corpus) - HISTORY_SIZE):
+            inputs.append(sum(entire_corpus[i: i + HISTORY_SIZE], []))
+            labels.append(entire_corpus[i + HISTORY_SIZE])
+        
+        # padding
+        inputs, labels = pad_corpus(inputs, labels)
+    elif mode == 'LM': 
+        print('Mode is language modelling')
+        flattened_corpus = [word for senten in entire_corpus for word in senten]
+        inputs = flattened_corpus[:len(entire_corpus) - 1]
+        labels = flattened_corpus[1:]
 
-        inputs.append(utt_pad_input)
-        labels.append(utt_pad_label)
+        # make into WINDOW_SIZE inputs and labels
+        input_windows = []
+        label_windows = []
+        for window_start in range(0, len(inputs) - WINDOW_SIZE):
+            input_windows.append(inputs[window_start:window_start + WINDOW_SIZE])
+            label_windows.append(labels[window_start:window_start + WINDOW_SIZE])
+        inputs = input_windows
+        labels = label_windows
 
-    # remove first label and last input
-    inputs = inputs[:-1]
-    labels = labels[1:]
-
-    # this would make it so there are no unk_vocabs
+    # build the vocab dict
     vocab, pad_indx = build_vocab(inputs+labels)
+
+    # split into training and testing sets
     split_indx = int(len(inputs) * .9)
     train_inputs = inputs[:split_indx]
     test_inputs = inputs[split_indx:]
     train_labels = labels[:split_indx]
     test_labels = labels[split_indx:]
+
+    # convert sentences to list of IDs
     train_inputs = convert_to_id(vocab, train_inputs)
     test_inputs = convert_to_id(vocab, test_inputs)
     train_labels = convert_to_id(vocab, train_labels)
     test_labels = convert_to_id(vocab, test_labels)
 
     return train_inputs, test_inputs, train_labels, test_labels, vocab, pad_indx
+
+    # corpus = Corpus(filename=download("friends-corpus"))
+    # count = 0
+    # inputs = []
+    # labels = []
+    # for utt in corpus.iter_utterances():
+    #     utt_preprocessed = preprocess_sentence(utt.text)
+    #     utt_split = utt_preprocessed.split()
+    #     utt_pad = pad_corpus(utt_split, count)
+    #     if (count%2 == 0):
+    #         inputs.append(utt_pad)
+    #     else:
+    #         labels.append(utt_pad)
+    #     count += 1
+    # if (len(inputs) != len(labels)):
+    #     m = min(len(inputs), len(labels))
+    #     inputs = inputs[:m]
+    #     labels = labels[:m]
+    # # this would make it so there are no unk_vocabs
+    # vocab, pad_indx = build_vocab(inputs+labels)
+    # split_indx = int(len(inputs) * .9)
+    # train_inputs = inputs[:split_indx]
+    # test_inputs = inputs[split_indx:]
+    # train_labels = labels[:split_indx]
+    # test_labels = labels[split_indx:]
+    # train_inputs = convert_to_id(vocab, train_inputs)
+    # test_inputs = convert_to_id(vocab, test_inputs)
+    # train_labels = convert_to_id(vocab, train_labels)
+    # test_labels = convert_to_id(vocab, test_labels)
+
+    # return train_inputs, test_inputs, train_labels, test_labels, vocab, pad_indx

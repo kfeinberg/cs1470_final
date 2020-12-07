@@ -106,7 +106,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 		self.layer_norm = tf.keras.layers.LayerNormalization(axis=-1)
 
 	@tf.function
-	def call(self, inputs, context=None):
+	def call(self, inputs, context=None, mode=None):
 		"""
 		If the multi_headed==True, the model uses multiheaded attention (Only 2470 students must implement this)
 		:param inputs: tensor of [BATCH_SIZE x WINDOW_SIZE x EMBEDDING_SIZE ]
@@ -123,7 +123,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 		atten_out+=inputs
 		atten_normalized = self.layer_norm(atten_out)
 
-		if self.is_decoder:
+		if self.is_decoder and mode == 'MT':
 			assert context is not None,"Decoder blocks require context"
 			context_atten_out = self.self_context_atten(context,context,atten_normalized)
 			self.dropout(context_atten_out)

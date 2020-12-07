@@ -45,25 +45,32 @@ class Transformer_Model(tf.keras.Model):
         self.dense2 = tf.keras.layers.Dense(units=self.vocab_size, activation='softmax')
 
     @tf.function
-    def call(self, encoder_input, decoder_input):
+    def call(self, encoder_input, decoder_input, mode):
         """
 		:param encoder_input: batched ids corresponding to prompt sentences
 		:param decoder_input: batched ids corresponding to response sentences
 		:return probs: The 3d probabilities as a tensor, [batch_size x window_size x vocab_size]
 		"""
-        # 1) embed prompt sentences and add positional encoding
-        prompt_embedded = tf.nn.embedding_lookup(self.prompt_embedding, encoder_input)
-        pos_enc_prompts = self.prompt_pos_enc.call(prompt_embedded)
+        # if MT, then use encoder
+        if mode == 'MT':
+            # 1) embed prompt sentences and add positional encoding
+            prompt_embedded = tf.nn.embedding_lookup(self.prompt_embedding, encoder_input)
+            pos_enc_prompts = self.prompt_pos_enc.call(prompt_embedded)
 
-        # 2) pass prompt embeddings to encoder
-        encoder_output = self.encoder.call(pos_enc_prompts)
-
+            # 2) pass prompt embeddings to encoder
+            encoder_output = self.encoder.call(pos_enc_prompts)
+        
+        # decoder
         # 3) embed response sentences and add positional encoding
         response_embedded = tf.nn.embedding_lookup(self.response_embedding, decoder_input)
         pos_enc_responses = self.response_pos_enc.call(response_embedded)
 
-        # 4) pass response embeddings and encoder output to the decoder
-        decoder_output = self.decoder.call(pos_enc_responses, context=encoder_output)
+        if mode == 'MT':
+            # 4) pass response embeddings and encoder output to the decoder
+            decoder_output = self.decoder.call(pos_enc_responses, context=encoder_output, mode=mode)
+        elif mode == 'LM':
+            # no context
+            decoder_output = self.decoder.call(pos_enc_responses, context=None, mode=mode)
 
         # 5) pass through dense layers to get probabilities
         output = self.dense1(decoder_output)
