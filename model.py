@@ -44,6 +44,9 @@ class Transformer_Model(tf.keras.Model):
         self.dense1 = tf.keras.layers.Dense(units=self.hidden_size, activation='relu')
         self.dense2 = tf.keras.layers.Dense(units=self.vocab_size, activation='softmax')
 
+        # LM encoder/decoder
+        self.lstm = tf.keras.layers.LSTM(self.hidden_size, return_sequences=True, return_state=True)
+
     @tf.function
     def call(self, encoder_input, decoder_input, mode):
         """
@@ -59,7 +62,7 @@ class Transformer_Model(tf.keras.Model):
 
             # 2) pass prompt embeddings to encoder
             encoder_output = self.encoder.call(pos_enc_prompts)
-        
+
         # decoder
         # 3) embed response sentences and add positional encoding
         response_embedded = tf.nn.embedding_lookup(self.response_embedding, decoder_input)
@@ -70,7 +73,8 @@ class Transformer_Model(tf.keras.Model):
             decoder_output = self.decoder.call(pos_enc_responses, context=encoder_output, mode=mode)
         elif mode == 'LM':
             # no context
-            decoder_output = self.decoder.call(pos_enc_responses, context=None, mode=mode)
+            decoder_output, final_memory_state, final_carry_state = self.lstm(response_embedded, initial_state=None)
+            #decoder_output = self.decoder.call(pos_enc_responses, context=None, mode=mode)
 
         # 5) pass through dense layers to get probabilities
         output = self.dense1(decoder_output)

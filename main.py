@@ -17,7 +17,7 @@ def train(model, train_inputs, train_labels, padding_index, mode):
     loss_list = []
     accuracy_list = []
     total_words = 0
-        
+
     # shuffle inputs and labels
     indices = tf.range(num_sentences)
     indices = tf.random.shuffle(indices)
@@ -43,12 +43,13 @@ def train(model, train_inputs, train_labels, padding_index, mode):
 
             # only mask MT bc no padding for LM
             if mode == 'MT':
-                mask = decoder_labels != padding_index 
+                mask = decoder_labels != padding_index
             elif mode == 'LM':
                 mask = tf.cast(decoder_labels, dtype=tf.float32)
 
             num_words = np.sum(mask)
             total_words += num_words
+            mask = tf.cast(mask, dtype=tf.float32)
             loss = model.loss_function(probs, decoder_labels, mask)
             loss_list.append(loss)
 
@@ -91,13 +92,14 @@ def test(model, test_inputs, test_labels, padding_index, mode):
 
         # only mask MT bc no padding for LM
         if mode == 'MT':
-            mask = decoder_labels != padding_index 
+            mask = decoder_labels != padding_index
         elif mode == 'LM':
             mask = tf.cast(decoder_labels, dtype=tf.float32)
 
         num_words = np.sum(mask)
         total_words += num_words
 
+        mask = tf.cast(mask, dtype=tf.float32)
         loss = model.loss_function(probs, decoder_labels, mask)
         loss_list.append(loss)
 
@@ -113,7 +115,7 @@ def test(model, test_inputs, test_labels, padding_index, mode):
 def main():
 
     # either LM (language modelling - only decoder) or MT (machine translation - encoder + decoder)
-    mode = sys.argv[1] 
+    mode = sys.argv[1]
 
     print("Running preprocessing...")
     train_inputs, test_inputs, train_labels, test_labels, vocab, pad_indx = get_data(mode)
