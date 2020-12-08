@@ -130,7 +130,7 @@ def main():
     print(test_inputs.shape)
     model = Transformer_Model(WINDOW_SIZE, len(vocab), train_inputs.shape[0])
 
-    for epoch in range(1):
+    for epoch in range(3):
         print('Training epoch #' + str(epoch + 1))
         perp, acc = train(model, train_inputs, train_labels, pad_indx, mode)
         print(perp)

@@ -168,7 +168,7 @@ def get_data(mode):
         # make into WINDOW_SIZE inputs and labels
         input_windows = []
         label_windows = []
-        for window_start in range(0, len(inputs) - WINDOW_SIZE):
+        for window_start in range(0, len(inputs) - WINDOW_SIZE, WINDOW_SIZE):
             input_windows.append(inputs[window_start:window_start + WINDOW_SIZE])
             label_windows.append(labels[window_start:window_start + WINDOW_SIZE])
         inputs = input_windows
@@ -178,7 +178,7 @@ def get_data(mode):
     vocab, pad_indx = build_vocab(inputs+labels)
 
     # split into training and testing sets
-    split_indx = int(len(inputs) * .9)
+    split_indx = int(len(inputs) * .85)
     train_inputs = inputs[:split_indx]
     test_inputs = inputs[split_indx:]
     train_labels = labels[:split_indx]

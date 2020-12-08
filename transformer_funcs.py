@@ -85,10 +85,13 @@ class Feed_Forwards(tf.keras.layers.Layer):
 
 		self.layer_1 = tf.keras.layers.Dense(emb_sz,activation='relu')
 		self.layer_2 = tf.keras.layers.Dense(emb_sz)
+		self.dropout = tf.keras.layers.Dropout(rate=0.1)
+
 
 	@tf.function
 	def call(self, inputs):
 		layer_1_out = self.layer_1(inputs)
+		layer_1_out = self.dropout(layer_1_out)
 		layer_2_out = self.layer_2(layer_1_out)
 		return layer_2_out
 
@@ -130,6 +133,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 			context_atten_out+=atten_normalized
 			atten_normalized = self.layer_norm(context_atten_out)
 
+		atten_normalized = self.dropout(atten_normalized)
 		ff_out=self.ff_layer(atten_normalized)
 		ff_out = self.dropout(ff_out)
 		ff_out+=atten_normalized
