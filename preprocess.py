@@ -50,20 +50,19 @@ def preprocess_sentence(sentence):
     sentence = sentence.strip()
     return sentence
 
-
-# def pad_corpus(sentence, count):
-#     """
-#     Pads a sentence passed in with STOP and PAD tokens, as well as a START token if it is a label.
-#     :param sentence: sentence split on whitespace
-#     :param count: the iteration number for seeing if label or input
-#     :return: the sentences shortened/lengthened to WINDOW_SIZE length and padded with stop/start/pad tokens
-#     """
-#     padded_sentence = sentence[:WINDOW_SIZE-1]
-#     if (count%2 == 0):
-#         padded_sentence += [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
-#     else:
-#         padded_sentence = [START_TOKEN] + padded_sentence + [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
-#     return padded_sentence
+def pad_corpus_chatbot(sentence, count):
+    """
+    Pads a sentence passed in with STOP and PAD tokens, as well as a START token if it is a label.
+    :param sentence: sentence split on whitespace
+    :param count: the iteration number for seeing if label or input
+    :return: the sentences shortened/lengthened to WINDOW_SIZE length and padded with stop/start/pad tokens
+    """
+    padded_sentence = sentence[:WINDOW_SIZE-1]
+    if (count%2 == 0):
+        padded_sentence += [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
+    else:
+        padded_sentence = [START_TOKEN] + padded_sentence + [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded_sentence)-1)
+    return padded_sentence
 
 def pad_corpus(inputs, labels):
     """
@@ -78,7 +77,7 @@ def pad_corpus(inputs, labels):
         padded_INPUT = line[-WINDOW_SIZE:]
         if len(padded_INPUT) < WINDOW_SIZE:
             padded_INPUT += [PAD_TOKEN] * (WINDOW_SIZE - len(padded_INPUT))
-        
+
         INPUTS_padded_sentences.append(padded_INPUT)
 
     LABELS_padded_sentences = []
@@ -156,10 +155,10 @@ def get_data(mode):
         for i in range(0, len(entire_corpus) - HISTORY_SIZE):
             inputs.append(sum(entire_corpus[i: i + HISTORY_SIZE], []))
             labels.append(entire_corpus[i + HISTORY_SIZE])
-        
+
         # padding
         inputs, labels = pad_corpus(inputs, labels)
-    elif mode == 'LM': 
+    elif mode == 'LM':
         print('Mode is language modelling')
         flattened_corpus = [word for senten in entire_corpus for word in senten]
         inputs = flattened_corpus[:len(entire_corpus) - 1]
