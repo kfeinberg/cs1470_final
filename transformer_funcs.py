@@ -87,11 +87,11 @@ class Feed_Forwards(tf.keras.layers.Layer):
 		self.layer_2 = tf.keras.layers.Dense(emb_sz)
 		self.dropout = tf.keras.layers.Dropout(rate=0.1)
 
-
 	@tf.function
-	def call(self, inputs):
+	def call(self, inputs, is_training=True):
 		layer_1_out = self.layer_1(inputs)
-		layer_1_out = self.dropout(layer_1_out)
+		if is_training:
+			layer_1_out = self.dropout(layer_1_out)
 		layer_2_out = self.layer_2(layer_1_out)
 		return layer_2_out
 
@@ -109,7 +109,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 		self.layer_norm = tf.keras.layers.LayerNormalization(axis=-1)
 
 	@tf.function
-	def call(self, inputs, context=None, mode=None):
+	def call(self, inputs, context=None, mode=None, is_training=True):
 		"""
 		If the multi_headed==True, the model uses multiheaded attention (Only 2470 students must implement this)
 		:param inputs: tensor of [BATCH_SIZE x WINDOW_SIZE x EMBEDDING_SIZE ]
@@ -120,7 +120,7 @@ class Transformer_Block(tf.keras.layers.Layer):
 		with av.trans_block(self.is_decoder):
 			atten_out = self.self_atten(inputs,inputs,inputs)
 
-		if self.is_decoder == False: # only dropout if encoder
+		if self.is_decoder == False and is_training: # only dropout if encoder
 			atten_out = self.dropout(atten_out)
 
 		atten_out+=inputs
@@ -129,13 +129,16 @@ class Transformer_Block(tf.keras.layers.Layer):
 		if self.is_decoder and mode == 'MT':
 			assert context is not None,"Decoder blocks require context"
 			context_atten_out = self.self_context_atten(context,context,atten_normalized)
-			context_atten_out = self.dropout(context_atten_out)
+			if is_training:
+				context_atten_out = self.dropout(context_atten_out)
 			context_atten_out+=atten_normalized
 			atten_normalized = self.layer_norm(context_atten_out)
 
-		atten_normalized = self.dropout(atten_normalized)
-		ff_out=self.ff_layer(atten_normalized)
-		ff_out = self.dropout(ff_out)
+		if is_training:
+			atten_normalized = self.dropout(atten_normalized)
+		ff_out=self.ff_layer(atten_normalized, is_training)
+		if is_training:
+			ff_out = self.dropout(ff_out)
 		ff_out+=atten_normalized
 		ff_norm = self.layer_norm(ff_out)
 

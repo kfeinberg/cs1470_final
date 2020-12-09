@@ -48,7 +48,7 @@ class Transformer_Model(tf.keras.Model):
         self.lstm = tf.keras.layers.LSTM(self.hidden_size, return_sequences=True, return_state=True)
 
     @tf.function
-    def call(self, encoder_input, decoder_input, mode):
+    def call(self, encoder_input, decoder_input, mode, is_training=True):
         """
 		:param encoder_input: batched ids corresponding to prompt sentences
 		:param decoder_input: batched ids corresponding to response sentences
@@ -61,7 +61,7 @@ class Transformer_Model(tf.keras.Model):
             pos_enc_prompts = self.prompt_pos_enc.call(prompt_embedded)
 
             # 2) pass prompt embeddings to encoder
-            encoder_output = self.encoder.call(pos_enc_prompts)
+            encoder_output = self.encoder.call(pos_enc_prompts, is_training=is_training)
 
         # decoder
         # 3) embed response sentences and add positional encoding
@@ -70,7 +70,7 @@ class Transformer_Model(tf.keras.Model):
 
         if mode == 'MT':
             # 4) pass response embeddings and encoder output to the decoder
-            decoder_output = self.decoder.call(pos_enc_responses, context=encoder_output, mode=mode)
+            decoder_output = self.decoder.call(pos_enc_responses, context=encoder_output, mode=mode, is_training=is_training)
         elif mode == 'LM':
             # no context
             decoder_output, final_memory_state, final_carry_state = self.lstm(response_embedded, initial_state=None)

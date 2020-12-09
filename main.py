@@ -25,6 +25,7 @@ def train(model, train_inputs, train_labels, padding_index, mode):
     shuff_labs = tf.gather(train_labels, indices)
 
     for batch in range(0, num_sentences - model.batch_size, model.batch_size):
+
         start = batch
         end = batch + model.batch_size
 
@@ -88,7 +89,7 @@ def test(model, test_inputs, test_labels, padding_index, mode):
             decoder_input = test_inputs[start:end]
             decoder_labels = test_labels[start:end]
 
-        probs = model.call(encoder_input, decoder_input, mode)
+        probs = model.call(encoder_input, decoder_input, mode, is_training=False)
 
         # only mask MT bc no padding for LM
         if mode == 'MT':

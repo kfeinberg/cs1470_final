@@ -54,11 +54,11 @@ def generate_sentence(model, encoder_input, lookup, vocab, mode):
 
     for i in range(1, WINDOW_SIZE):
         if (mode == 'TF'):
-            res = np.array(model.call(encoder_input, encoder_input, mode = 'MT'))
+            res = np.array(model.call(encoder_input, encoder_input, mode = 'MT', is_training=False))
             res = np.argmax(res, axis=2)[0]
             return res
         else:
-            res = np.array(model.call(encoder_input, decoder_input, mode = 'MT')) # teacher forcing removed
+            res = np.array(model.call(encoder_input, decoder_input, mode = 'MT', is_training=False)) # teacher forcing removed
             res = np.argmax(res, axis=2)[0]
             decoder_input[0][i] = res[i-1] # sets ith index of decoder
             converted_symbol = lookup[decoder_input[0][i]]
