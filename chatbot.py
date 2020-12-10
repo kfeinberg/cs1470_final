@@ -52,7 +52,7 @@ def generate_sentence(model, encoder_input, lookup, vocab, mode):
     decoder_input = convert_to_id_single(vocab, decoder_input)
     decoder_input = np.reshape(decoder_input, (1, len(decoder_input)))
 
-    for i in range(1, WINDOW_SIZE):
+    for i in range(1, 80-1):
         if (mode == 'TF'):
             res = np.array(model.call(encoder_input, encoder_input, mode = 'MT', is_training=False))
             res = np.argmax(res, axis=2)[0]
